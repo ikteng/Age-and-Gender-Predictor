@@ -48,11 +48,9 @@ This program uses the saved CNN models for age and gender prediction to analyze 
 ### Import Libraries
 Import necessary libraries including pandas, numpy, OpenCV (cv2), PIL, matplotlib, and tensorflow.
 
-### Load Trained/Saved Models
-Load the pre-trained age prediction model (agemodel) and gender prediction model (genmodel) using the load_model function from Keras.
-
-### Load Haar Cascade for Face Detection
-Load the Haar cascade classifier (face_cascade) for detecting faces. This classifier is used by OpenCV for face detection.
+### Load Trained/Saved Models + Haar Cascade for Face Detection
+- Load the pre-trained age prediction model (agemodel) and gender prediction model (genmodel) using the load_model function from Keras.
+- Load the Haar cascade classifier (face_cascade) for detecting faces. This classifier is used by OpenCV for face detection.
 
 ### Process and Predict Function
 - takes an images as input, processes it for prediction, and returns the predicted age and gender
@@ -66,17 +64,17 @@ Load the Haar cascade classifier (face_cascade) for detecting faces. This classi
 - it then converts the face region to a PIL image, uses the process and predict function to predict age and gender, and displays the results on the frame
 - it display the resulting frame with bounding boxes and predictions using OpenCV
 
+![prediction live](https://github.com/ikteng/Age-and-Gender-Predictor/blob/98a381e5f563433cbca9f8ebfd9e80f8762cc625/media/Screenshot%202024-05-21%20114544.png)
+
 ## predictor live.py
 This program uses the saved CNN models for age and gender prediction to analyze faces in live video streams captured by a webcam, and provides real-time predictions for age and gender with bounding boxes drawn aroudn the detected faces.
 
 ### Import Libraries
 Import necessary libraries including pandas, numpy, OpenCV (cv2), PIL, matplotlib, and tensorflow.
 
-### Load Trained/Saved Models
-Load the pre-trained age prediction model (agemodel) and gender prediction model (genmodel) using the load_model function from Keras.
-
-### Load Haar Cascade for Face Detection
-Load the Haar cascade classifier (face_cascade) for detecting faces. This classifier is used by OpenCV for face detection.
+### Load Trained/Saved Models + Haar Cascade for Face Detection
+- Load the pre-trained age prediction model (agemodel) and gender prediction model (genmodel) using the load_model function from Keras.
+- Load the Haar cascade classifier (face_cascade) for detecting faces. This classifier is used by OpenCV for face detection.
 
 ### Process and Predict Function
 - takes an images as input, processes it for prediction, and returns the predicted age and gender
