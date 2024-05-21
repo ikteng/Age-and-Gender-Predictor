@@ -10,7 +10,7 @@ I used the crop_part1 of the dataset in this project.
 # Building the Model
 This program preprocesses image data, builds CNN models for age and gender prediction, trains the model using data augmentation and callbacks for regularization, and saves the trained models for future use.
 
-## loading and preparing data
+## Loading and Preparing data
 - load images from the crop_part1 file and extract age and gender information from the filenames
 - create a DateFrame containing image paths, ages, and genders
 - balance the data by undersampling ages less than or equal to 4 and filter out ages greater than or equal 80 and invalid gender values
