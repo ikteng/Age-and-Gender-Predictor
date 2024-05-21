@@ -1,6 +1,8 @@
 # Age-and-Gender-Predictor
 This project shows the practical application of deep learning techniques for age and gender prediction by analyzing facial iamges offline and real-time.
 
+![UTKface dataset](https://github.com/ikteng/Age-and-Gender-Predictor/blob/aea2f51ddd94cc3d3abf2e661136da0e00d76730/media/Screenshot%202024-05-21%20113638.png)
+
 Dataset: https://www.kaggle.com/datasets/jangedoo/utkface-new
 I used the crop_part1 of the dataset in this project.
 
@@ -37,6 +39,8 @@ Define callbacks for early stopping (EarlyStopping) and model checkpointing (Mod
 
 ### Model Saving
 Save the trained age and gender prediction models using the save method
+
+![prediction](https://github.com/ikteng/Age-and-Gender-Predictor/blob/aea2f51ddd94cc3d3abf2e661136da0e00d76730/media/Screenshot%202024-05-21%20114127.png)
 
 ## predictor.py
 This program uses the saved CNN models for age and gender prediction to analyze images, detects faces using Haar cascade classifier, and provides prediction for age and gender with bounding boxes drawn around the detected faces.
