@@ -49,8 +49,8 @@ def process_and_predict(im):
     return int(age[0][0]), gender
 
 # Load the models
-agemodel = load_model(r'Age and Gender Prediction/age_model1.h5')
-genmodel = load_model(r'Age and Gender Prediction/gender_model1.h5')
+agemodel = load_model(r'age and gender prediction/age_model.h5')
+genmodel = load_model(r'age and gender prediction/gender_model.h5')
 
 # Load the Haar cascade for face detection
 face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
@@ -58,6 +58,11 @@ face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_fronta
 def process_and_draw_boxes(image_path):
     # Read the image using OpenCV
     frame = cv2.imread(image_path)
+    
+    # Check if image is loaded properly
+    if frame is None:
+        print(f"Error loading image: {image_path}")
+        return
     
     # Convert the image to grayscale for face detection
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
@@ -106,4 +111,4 @@ def process_and_draw_boxes(image_path):
     cv2.destroyAllWindows()
 
 # Use the function to process and draw boxes on an image
-process_and_draw_boxes("Age and Gender Prediction/test/img3.jpg")
+process_and_draw_boxes(r"age and gender prediction/test/img3.jpg")
