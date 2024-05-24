@@ -1,5 +1,5 @@
 # Age-and-Gender-Predictor
-This project shows the practical application of deep learning techniques for age and gender prediction by analyzing facial iamges offline and real-time.
+This project shows the practical application of deep learning techniques for age and gender prediction by analyzing facial images offline and real-time.
 
 ![UTKface dataset](https://github.com/ikteng/Age-and-Gender-Predictor/blob/aea2f51ddd94cc3d3abf2e661136da0e00d76730/media/Screenshot%202024-05-21%20113638.png)
 
