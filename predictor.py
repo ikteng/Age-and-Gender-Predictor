@@ -1,114 +1,119 @@
-import pandas as pd
-import numpy as np
-import seaborn as sns
+# predictor.py
 import os
-from PIL import Image, ImageOps
-from sklearn.model_selection import train_test_split
-
-from keras.models import Sequential, load_model
-from keras.layers import Conv2D, MaxPooling2D, Activation, Dropout, Flatten, Dense
-from keras import optimizers
-from keras.preprocessing.image import ImageDataGenerator
-import tensorflow as tf
-import matplotlib.pyplot as plt
 import cv2
+import numpy as np
+from PIL import Image
+import torch
+from torchvision import transforms, models
+from torch import nn
+import mediapipe as mp
 
-# Evaluate the models
-def process_and_predict(im):
-    width, height = im.size
-    if width == height:
-        im = im.resize((200, 200), Image.LANCZOS)
-    else:
-        if width > height:
-            left = width/2 - height/2
-            right = width/2 + height/2
-            top = 0
-            bottom = height
-            im = im.crop((left, top, right, bottom))
-            im = im.resize((200, 200), Image.LANCZOS)
+
+IMG_SIZE = 128
+TEST_FOLDER = 'test'
+EPOCHS = 20
+AGE_MODEL_PATH = f'models/age_resnet18_{IMG_SIZE}_{EPOCHS}.pth'
+GENDER_MODEL_PATH = f'models/gender_resnet18_{IMG_SIZE}_{EPOCHS}.pth'
+GENDER_MAP = {0: "Male", 1: "Female"}
+DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
+# Load CNN-based age model
+age_model = models.resnet18(pretrained=False)
+age_model.fc = nn.Linear(age_model.fc.in_features, 1)
+age_model.load_state_dict(torch.load(AGE_MODEL_PATH, map_location=DEVICE))
+age_model.to(DEVICE)
+age_model.eval()
+
+# Load gender model (PyTorch)
+gender_model = models.resnet18(pretrained=False)
+gender_model.fc = nn.Linear(gender_model.fc.in_features, 2)
+gender_model.load_state_dict(torch.load(GENDER_MODEL_PATH, map_location=DEVICE))
+gender_model.to(DEVICE)
+gender_model.eval()
+
+# Define transform for gender model
+common_transform = transforms.Compose([
+    transforms.Resize((IMG_SIZE, IMG_SIZE)),
+    transforms.CenterCrop(IMG_SIZE),
+    transforms.ToTensor(),
+    transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                        std=[0.229, 0.224, 0.225]),
+])
+
+# Function to predict age and gender
+def process_and_predict(face_image):
+    """Resize, normalize, and predict age and gender."""
+    # === Age Prediction ===
+    age_img = Image.fromarray(cv2.cvtColor(face_image, cv2.COLOR_BGR2RGB))
+    age_tensor = common_transform(age_img).unsqueeze(0).to(DEVICE)
+    with torch.no_grad():
+        age_pred = age_model(age_tensor).cpu().item()
+    age = int(round(age_pred))
+
+    # === Gender Prediction ===
+    gender_img = Image.fromarray(cv2.cvtColor(face_image, cv2.COLOR_BGR2RGB))
+    input_tensor = common_transform(gender_img).unsqueeze(0).to(DEVICE)
+
+    with torch.no_grad():
+        outputs = gender_model(input_tensor)
+        probs = torch.nn.functional.softmax(outputs, dim=1).cpu().numpy()[0]
+        gender_class = np.argmax(probs)
+
+    gender_label = GENDER_MAP[gender_class]
+    return int(round(age)), gender_label, probs
+
+# Initialize MediaPipe face detection
+mp_face_detection = mp.solutions.face_detection
+mp_drawing = mp.solutions.drawing_utils
+
+# Main loop
+with mp_face_detection.FaceDetection(model_selection=1, min_detection_confidence=0.5) as face_detection:
+    for filename in os.listdir(TEST_FOLDER):
+        if not filename.lower().endswith(('.png', '.jpg', '.jpeg')):
+            continue
+
+        path = os.path.join(TEST_FOLDER, filename)
+        image = cv2.imread(path)
+        if image is None:
+            print(f"Could not read image: {filename}")
+            continue
+
+        # Convert to RGB for MediaPipe
+        image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        results = face_detection.process(image_rgb)
+
+        if results.detections:
+            for detection in results.detections:
+                bboxC = detection.location_data.relative_bounding_box
+                ih, iw, _ = image.shape
+                x = int(bboxC.xmin * iw)
+                y = int(bboxC.ymin * ih)
+                w = int(bboxC.width * iw)
+                h = int(bboxC.height * ih)
+
+                # Optional padding around face
+                padding = int(0.1 * w)
+                x1 = max(0, x - padding)
+                y1 = max(0, y - padding)
+                x2 = min(iw, x + w + padding)
+                y2 = min(ih, y + h + padding)
+
+                face = image[y1:y2, x1:x2]
+
+                # Only predict if face crop is valid
+                if face.size == 0:
+                    continue
+
+                age, gender, probs = process_and_predict(face)
+
+                label = f"Age: {age}, Gender: {gender}"
+                cv2.rectangle(image, (x1, y1), (x2, y2), (255, 0, 0), 2)
+                cv2.putText(image, label, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (36, 255, 12), 2)
+
         else:
-            left = 0
-            right = width
-            top = height/2 - width/2
-            bottom = height/2 + width/2
-            im = im.crop((left, top, right, bottom))
-            im = im.resize((200, 200), Image.LANCZOS)
-            
-    ar = np.asarray(im)
-    ar = ar.astype('float32')
-    ar /= 255.0
-    ar = ar.reshape(-1, 200, 200, 3)
-    
-    age = agemodel.predict(ar)
-    gender = np.round(genmodel.predict(ar))
-    if gender == 0:
-        gender = 'male'
-    elif gender == 1:
-        gender = 'female'
-        
-    return int(age[0][0]), gender
+            print(f"No face detected in {filename}")
 
-# Load the models
-agemodel = load_model(r'age and gender prediction/age_model.h5')
-genmodel = load_model(r'age and gender prediction/gender_model.h5')
-
-# Load the Haar cascade for face detection
-face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
-
-def process_and_draw_boxes(image_path):
-    # Read the image using OpenCV
-    frame = cv2.imread(image_path)
-    
-    # Check if image is loaded properly
-    if frame is None:
-        print(f"Error loading image: {image_path}")
-        return
-    
-    # Convert the image to grayscale for face detection
-    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
-
-    for (x, y, w, h) in faces:
-        # Draw the bounding box around each face
-        cv2.rectangle(frame, (x, y), (x+w, y+h), (255, 0, 0), 2)
-
-        # Extract the face region
-        face = frame[y:y+h, x:x+w]
-
-        # Convert the face region to a PIL Image
-        img = Image.fromarray(cv2.cvtColor(face, cv2.COLOR_BGR2RGB))
-
-        # Process and predict
-        age, gender = process_and_predict(img)
-
-        # Display the results on the frame
-        cv2.putText(frame, f'Age: {age}', (x, y-10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (36,255,12), 2)
-        cv2.putText(frame, f'Gender: {gender}', (x, y+h+20), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (36,255,12), 2)
-
-    # Set the window name
-    window_name = 'Image Age and Gender Prediction'
-    cv2.namedWindow(window_name, cv2.WINDOW_NORMAL)
-
-    # Calculate the aspect ratio and set the maximum window size while keeping the aspect ratio
-    max_width = 900
-    max_height = 700
-    height, width = frame.shape[:2]
-
-    # Maintain aspect ratio
-    aspect_ratio = width / height
-    if width > max_width:
-        width = max_width
-        height = int(width / aspect_ratio)
-    if height > max_height:
-        height = max_height
-        width = int(height * aspect_ratio)
-
-    cv2.resizeWindow(window_name, width, height)
-
-    # Display the resulting frame with bounding boxes and predictions
-    cv2.imshow(window_name, frame)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
-
-# Use the function to process and draw boxes on an image
-process_and_draw_boxes(r"age and gender prediction/test/img3.jpg")
+        # Show result
+        cv2.imshow(f'Prediction - {filename}', image)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
