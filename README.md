@@ -8,7 +8,7 @@ Dataset: https://www.kaggle.com/datasets/jangedoo/utkface-new
 I used the crop_part1 of the dataset in this project.
 
 # How to Use This Repository?
-1. clone the repository
+1. Clone the repository
     ```bash
     git clone https://github.com/ikteng/Age-and-Gender-Predictor.git
     cd Age-and-Gender-Predictor
