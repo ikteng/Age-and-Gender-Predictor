@@ -23,7 +23,7 @@ I used the crop_part1 of the dataset in this project.
 ## Building the Model
 
 ### Age Model
-The age prediction model is built using a ResNet18-based convolutional neural network trained on the UTKFace dataset, specifically the crop_part1 subset. This model treats age prediction as a regression problem, where the goal is to predict a continuous age value from a face image.
+The age prediction model is built using a ResNet-based convolutional neural network trained on the UTKFace dataset, specifically the crop_part1 subset. This model treats age prediction as a regression problem, where the goal is to predict a continuous age value from a face image.
 
 #### Overview
 1. Data Preparation
@@ -36,7 +36,7 @@ The age prediction model is built using a ResNet18-based convolutional neural ne
     Images are resized to 128×128 pixels. The training set undergoes basic data augmentation such as horizontal flipping, while both training and testing images are normalized using ImageNet mean and standard deviation values.
 
 4. Model Architecture
-     model is based on a pre-trained ResNet18 architecture from torchvision.models. The final fully connected layer is modified to output a single value (i.e., the predicted age) instead of a classification.
+     model is based on a pre-trained Resnet architecture from torchvision.models. The final fully connected layer is modified to output a single value (i.e., the predicted age) instead of a classification.
 
 5. Training
     For each epoch, the model is trained to minimize Mean Squared Error (MSE) loss. Loss statistics are tracked using tqdm for a real-time progress bar.
@@ -48,7 +48,7 @@ The age prediction model is built using a ResNet18-based convolutional neural ne
     The trained model is saved as a .pth file under the models/ directory
 
 ### Gender Model
-The gender prediction model uses a transfer learning approach, leveraging a pre-trained ResNet18 convolutional neural network. The model classifies a face as either male or female based on facial features extracted from images in the UTKFace dataset.
+The gender prediction model uses a transfer learning approach, leveraging a pre-trained Resnet convolutional neural network. The model classifies a face as either male or female based on facial features extracted from images in the UTKFace dataset.
 
 #### Overview
 1. Label Extraction
@@ -61,7 +61,7 @@ A custom GenderDataset class is used to load images and their corresponding gend
     Images are resized to 128×128 pixels. The training images are augmented with random horizontal flips to improve generalization. All images are normalized using the ImageNet mean and standard deviation.
 
 4. Model Architecture
-    A ResNet18 model from torchvision.models is used with pre-trained weights. The final fully connected layer (fc) is replaced with a new layer outputting two values corresponding to the two gender classes.The model is trained using weighted cross-entropy loss to handle potential class imbalance.
+    A Resnet model from torchvision.models is used with pre-trained weights. The final fully connected layer (fc) is replaced with a new layer outputting two values corresponding to the two gender classes.The model is trained using weighted cross-entropy loss to handle potential class imbalance.
 
 5. Training
     The model is trained for 20 epochs with the Adam optimizer and a learning rate scheduler (reducing LR every 3 epochs).
@@ -78,11 +78,11 @@ A custom GenderDataset class is used to load images and their corresponding gend
 ## Making Predictions
 
 ### Predictions from Facial Images (predictor.py)
-The predictor.py script performs offline batch prediction of both age and gender from face images stored in a local directory (test/). It uses two pre-trained ResNet18 models: one for regressing age and one for classifying gender, along with MediaPipe for face detection.
+The predictor.py script performs offline batch prediction of both age and gender from face images stored in a local directory (test/). It uses two pre-trained Resnet models: one for regressing age and one for classifying gender, along with MediaPipe for face detection.
 
 #### Workflow
 1. Model Loading
-    Both age and gender models are loaded from the models/ directory. Each model is based on a ResNet18 backbone with modified output layers (1 output for age, 2 outputs for gender classes).Models are moved to GPU if available (cuda), else fallback to CPU.
+    Both age and gender models are loaded from the models/ directory. Each model is based on a Resnet backbone with modified output layers (1 output for age, 2 outputs for gender classes).Models are moved to GPU if available (cuda), else fallback to CPU.
 
 2. Face Detection
     - Uses MediaPipe’s FaceDetection with a confidence threshold of 0.5.
@@ -120,11 +120,11 @@ For each test image:
     - Results are visualized one at a time using cv2.imshow().
 
 ### Predictions from Live Camera (predictor live.py)
-The predictor_live.py script performs real-time age and gender prediction from a webcam feed using trained ResNet18 models and MediaPipe for face detection. It provides an intuitive, live demo where bounding boxes and predicted labels are displayed over detected faces.
+The predictor_live.py script performs real-time age and gender prediction from a webcam feed using trained ResNet models and MediaPipe for face detection. It provides an intuitive, live demo where bounding boxes and predicted labels are displayed over detected faces.
 
 #### Workflow
 1. Model Loading
-    Both age and gender models are loaded from the models/ directory. Each model is based on a ResNet18 backbone with modified output layers (1 output for age, 2 outputs for gender classes).Models are moved to GPU if available (cuda), else fallback to CPU.
+    Both age and gender models are loaded from the models/ directory. Each model is based on a ResNet backbone with modified output layers (1 output for age, 2 outputs for gender classes).Models are moved to GPU if available (cuda), else fallback to CPU.
 
 2. Face Detection
     - Uses MediaPipe’s FaceDetection with a confidence threshold of 0.5.
