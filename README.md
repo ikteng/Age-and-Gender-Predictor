@@ -44,6 +44,11 @@ The age prediction model is built using a ResNet-based convolutional neural netw
 6. Evaluation
     After training, the model is evaluated on the test set by calculating the Mean Absolute Error (MAE) between predicted and actual age values.
 
+    AGE MODEL RESULTS
+    MAE  : 4.19
+    RMSE : 6.39
+    R²   : 0.9340
+
 7. Model Saving
     The trained model is saved as a .pth file under the models/ directory
 
@@ -70,6 +75,16 @@ A custom GenderDataset class is used to load images and their corresponding gend
 
 6. Evaluation
     After training, the model is evaluated on the test set. Performance is measured using accuracy score between predicted and ground truth labels.
+
+        Detailed Classification Report:
+                precision    recall  f1-score   support       
+
+            Male       0.85      0.90      0.88       874       
+        Female       0.92      0.88      0.90      1082       
+
+        accuracy                           0.89      1956       
+    macro avg       0.89      0.89      0.89      1956       
+    weighted avg       0.89      0.89      0.89      1956 
 
 7. Model Saving
     The trained model is saved in the models/ directory

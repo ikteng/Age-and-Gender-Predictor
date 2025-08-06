@@ -12,7 +12,7 @@ from tqdm import tqdm
 
 IMAGE_DIR = 'crop_part1'
 IMG_SIZE = 128
-BATCH_SIZE = 32
+BATCH_SIZE = 64
 EPOCHS = 20
 DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
