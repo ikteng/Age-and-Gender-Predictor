@@ -77,14 +77,14 @@ A custom GenderDataset class is used to load images and their corresponding gend
     After training, the model is evaluated on the test set. Performance is measured using accuracy score between predicted and ground truth labels.
 
         Detailed Classification Report:
-                precision    recall  f1-score   support       
+                   precision    recall  f1-score   support       
 
             Male       0.85      0.90      0.88       874       
-        Female       0.92      0.88      0.90      1082       
+          Female       0.92      0.88      0.90      1082       
 
         accuracy                           0.89      1956       
-    macro avg       0.89      0.89      0.89      1956       
-    weighted avg       0.89      0.89      0.89      1956 
+        macro avg       0.89      0.89     0.89      1956       
+        weighted avg    0.89      0.89     0.89      1956 
 
 7. Model Saving
     The trained model is saved in the models/ directory

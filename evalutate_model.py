@@ -84,9 +84,9 @@ def evaluate_age_model():
     r2 = r2_score(targets, preds)
 
     print("\nAGE MODEL RESULTS")
-    print(f"MAE  : {mae:.2f}")
-    print(f"RMSE : {rmse:.2f}")
-    print(f"R²   : {r2:.4f}")
+    print(f"MAE  : {mae:.2f}") # Mean Absolute Error: average absolute difference between predicted ages and actual ages
+    print(f"RMSE : {rmse:.2f}") # Root Mean Squared Error: square root of the average of squared errors
+    print(f"R²   : {r2:.4f}") # Coefficient of Determination: Measures how well the model explains the variance in the data
 
 # ===== EVALUATE GENDER MODEL =====
 def evaluate_gender_model():
@@ -116,6 +116,10 @@ def evaluate_gender_model():
     print(f"Accuracy : {acc:.4f}")
     print("\nDetailed Classification Report:")
     print(classification_report(targets, preds, target_names=["Male", "Female"]))
+    # Precision: Out of all predicted positives, how many were actually correct?
+    # Recall (Sensitivity or True Positive Rate): Out of all actual positives, how many did the model correctly identify?
+    # F1-score: Harmonic mean of precision and recall (balances both)
+    # Accuracy:  Overall proportion of correct predictions
 
 # ===== MAIN =====
 if __name__ == "__main__":
