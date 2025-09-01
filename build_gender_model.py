@@ -15,8 +15,8 @@ from tqdm import tqdm
 
 IMAGE_DIR = 'crop_part1'
 IMG_SIZE = 128
-BATCH_SIZE = 64
-EPOCHS = 20
+BATCH_SIZE = 32
+EPOCHS = 30
 DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 os.makedirs('models', exist_ok=True)
@@ -135,14 +135,13 @@ def main():
     train_dataset = GenderDataset(train_paths, train_labels, transform=train_transform)
     test_dataset = GenderDataset(test_paths, test_labels, transform=test_transform)
 
-    train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True, num_workers=os.cpu_count())
-    test_loader = DataLoader(test_dataset, batch_size=BATCH_SIZE, shuffle=False, num_workers=os.cpu_count())
+    train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True)
+    test_loader = DataLoader(test_dataset, batch_size=BATCH_SIZE, shuffle=False)
     print("Dataloaders ready.")
 
     print("Loading pretrained ResNet18 model...")
-    model = models.resnet18(pretrained=True)
-    num_ftrs = model.fc.in_features
-    model.fc = nn.Linear(num_ftrs, 2)  # Binary classification
+    model = models.resnet18(weights=models.ResNet18_Weights.DEFAULT)
+    model.fc = nn.Linear(model.fc.in_features, 2)  # Binary classification
     model = model.to(DEVICE)
 
     print("Computing class weights...")

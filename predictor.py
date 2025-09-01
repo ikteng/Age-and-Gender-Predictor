@@ -11,7 +11,7 @@ import mediapipe as mp
 
 IMG_SIZE = 128
 TEST_FOLDER = 'test'
-EPOCHS = 20
+EPOCHS = 30
 AGE_MODEL_PATH = f'models/age_resnet18_{IMG_SIZE}_{EPOCHS}.pth'
 GENDER_MODEL_PATH = f'models/gender_resnet18_{IMG_SIZE}_{EPOCHS}.pth'
 GENDER_MAP = {0: "Male", 1: "Female"}

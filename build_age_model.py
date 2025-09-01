@@ -12,8 +12,8 @@ from tqdm import tqdm
 
 IMAGE_DIR = 'crop_part1'
 IMG_SIZE = 128
-BATCH_SIZE = 64
-EPOCHS = 20
+BATCH_SIZE = 32
+EPOCHS = 30
 DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 os.makedirs('models', exist_ok=True)
@@ -49,54 +49,7 @@ def main():
                 continue
 
     print(f"Loaded {len(image_paths)} images for age prediction.")
-    print(f"Mean age: {np.mean(ages):.2f}, Std: {np.std(ages):.2f}")
-
-    # # Show one sample image per age bucket
-    # print("Displaying one sample image from each age bucket...")
-    # age_bins = [(i, i + 9) for i in range(0, 100, 10)]
-    # bucket_images = {}
-
-    # # Collect only one image per bucket
-    # for img, age in zip(images, ages):
-    #     for low, high in age_bins:
-    #         label = f"{low}-{high}"
-    #         if label not in bucket_images and low <= age <= high:
-    #             bucket_images[label] = img
-    #             break
-
-    # # Sort buckets by age range (ensure order)
-    # sorted_buckets = sorted(bucket_images.items(), key=lambda x: int(x[0].split('-')[0]))
-
-    # # Plotting
-    # num_buckets = len(sorted_buckets)
-    # fig, axes = plt.subplots(1, num_buckets, figsize=(num_buckets * 2, 3))
-
-    # if num_buckets == 1:
-    #     axes = [axes]  # ensure iterable if only 1 bucket
-
-    # for ax, (bucket, img) in zip(axes, sorted_buckets):
-    #     ax.imshow(img)
-    #     ax.set_title(bucket)
-    #     ax.axis("off")
-
-    # plt.tight_layout()
-    # plt.show()
-
-    # # Age distribution in buckets of 10
-    # print("Analyzing age distribution in buckets...")
-    # bucket_counts = {f"{low}-{high}": 0 for low, high in age_bins}
-
-    # for age in ages:
-    #     for low, high in age_bins:
-    #         if low <= age <= high:
-    #             bucket_counts[f"{low}-{high}"] += 1
-    #             break
-
-    # total = len(ages)
-    # print("Age distribution (by decade):")
-    # for bucket, count in bucket_counts.items():
-    #     print(f"  {bucket}: {count} ({count / total:.2%})")
-
+    
     # Split
     print("Splitting into training and testing sets...")
     train_paths, test_paths, train_labels, test_labels = train_test_split(
@@ -137,12 +90,12 @@ def main():
     train_dataset = AgeDataset(train_paths, train_labels, transform=train_transform)
     test_dataset = AgeDataset(test_paths, test_labels, transform=test_transform)
 
-    train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True, num_workers=os.cpu_count())
-    test_loader = DataLoader(test_dataset, batch_size=BATCH_SIZE, shuffle=False, num_workers=os.cpu_count())
+    train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True)
+    test_loader = DataLoader(test_dataset, batch_size=BATCH_SIZE, shuffle=False)
     print("Dataloaders ready.")
 
     # Model (ResNet18 backbone)
-    model = models.resnet18(pretrained=True)
+    model = models.resnet18(weights=models.ResNet18_Weights.DEFAULT)
     model.fc = nn.Linear(model.fc.in_features, 1)  # Single output for regression
     model = model.to(DEVICE)
 

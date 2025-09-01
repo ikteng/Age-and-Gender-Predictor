@@ -15,8 +15,8 @@ from build_gender_model import GenderDataset
 # ===== CONFIG =====
 IMAGE_DIR = 'crop_part1'
 IMG_SIZE = 128
-BATCH_SIZE = 64
-EPOCHS = 20
+BATCH_SIZE = 32
+EPOCHS = 30
 DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 AGE_MODEL_PATH = f'models/age_resnet18_{IMG_SIZE}_{EPOCHS}.pth'
@@ -63,9 +63,9 @@ def evaluate_age_model():
     _, test_paths, _, test_labels = train_test_split(paths, ages, test_size=0.2, random_state=42)
 
     dataset = AgeDataset(test_paths, test_labels, transform=get_transform())
-    loader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=False, num_workers=os.cpu_count())
+    loader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=False)
 
-    model = models.resnet18(pretrained=False)
+    model = models.resnet18(weights=models.ResNet18_Weights.DEFAULT)
     model.fc = nn.Linear(model.fc.in_features, 1)
     model.load_state_dict(torch.load(AGE_MODEL_PATH, map_location=DEVICE))
     model.to(DEVICE).eval()
@@ -95,9 +95,9 @@ def evaluate_gender_model():
     _, test_paths, _, test_labels = train_test_split(paths, genders, test_size=0.2, stratify=genders, random_state=42)
 
     dataset = GenderDataset(test_paths, test_labels, transform=get_transform())
-    loader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=False, num_workers=os.cpu_count())
+    loader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=False)
 
-    model = models.resnet18(pretrained=False)
+    model = models.resnet18(weights=models.ResNet18_Weights.DEFAULT)
     model.fc = nn.Linear(model.fc.in_features, 2)
     model.load_state_dict(torch.load(GENDER_MODEL_PATH, map_location=DEVICE))
     model.to(DEVICE).eval()
