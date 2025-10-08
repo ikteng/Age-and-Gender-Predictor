@@ -1,119 +1,151 @@
-# predictor.py
 import os
 import cv2
+import torch
 import numpy as np
 from PIL import Image
-import torch
-from torchvision import transforms, models
+from torchvision import models, transforms
 from torch import nn
-import mediapipe as mp
 
 
 IMG_SIZE = 128
-TEST_FOLDER = 'test'
 EPOCHS = 30
-AGE_MODEL_PATH = f'models/age_resnet18_{IMG_SIZE}_{EPOCHS}.pth'
-GENDER_MODEL_PATH = f'models/gender_resnet18_{IMG_SIZE}_{EPOCHS}.pth'
-GENDER_MAP = {0: "Male", 1: "Female"}
 DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-# Load CNN-based age model
-age_model = models.resnet18(pretrained=False)
-age_model.fc = nn.Linear(age_model.fc.in_features, 1)
-age_model.load_state_dict(torch.load(AGE_MODEL_PATH, map_location=DEVICE))
-age_model.to(DEVICE)
-age_model.eval()
+AGE_MODEL_PATH = f"age_resnet34_{IMG_SIZE}_{EPOCHS}.pth"
+GENDER_MODEL_PATH = f"gender_efficientnetb0_{IMG_SIZE}_{EPOCHS}.pth"
 
-# Load gender model (PyTorch)
-gender_model = models.resnet18(pretrained=False)
-gender_model.fc = nn.Linear(gender_model.fc.in_features, 2)
-gender_model.load_state_dict(torch.load(GENDER_MODEL_PATH, map_location=DEVICE))
-gender_model.to(DEVICE)
-gender_model.eval()
+# --- Gender Mapping ---
+genders = {0: "Male", 1: "Female"}
 
-# Define transform for gender model
-common_transform = transforms.Compose([
+# --- Define Transform (same as test_transform used in training) ---
+transform = transforms.Compose([
     transforms.Resize((IMG_SIZE, IMG_SIZE)),
-    transforms.CenterCrop(IMG_SIZE),
     transforms.ToTensor(),
     transforms.Normalize(mean=[0.485, 0.456, 0.406],
-                        std=[0.229, 0.224, 0.225]),
+                         std=[0.229, 0.224, 0.225]),
 ])
 
-# Function to predict age and gender
-def process_and_predict(face_image):
-    """Resize, normalize, and predict age and gender."""
-    # === Age Prediction ===
-    age_img = Image.fromarray(cv2.cvtColor(face_image, cv2.COLOR_BGR2RGB))
-    age_tensor = common_transform(age_img).unsqueeze(0).to(DEVICE)
+# --- Load Age Model ---
+def load_age_model():
+    model = models.resnet34(weights=models.ResNet34_Weights.DEFAULT)
+    model.fc = nn.Linear(model.fc.in_features, 1)
+    model.load_state_dict(torch.load(AGE_MODEL_PATH, map_location=DEVICE))
+    model.to(DEVICE).eval()
+    return model
+
+# --- Load Gender Model ---
+def load_gender_model():
+    model = models.efficientnet_b0(weights=None)
+    model.classifier[1] = nn.Linear(model.classifier[1].in_features, 1)
+    model.load_state_dict(torch.load(GENDER_MODEL_PATH, map_location=DEVICE))
+    model.to(DEVICE).eval()
+    return model
+
+# --- Prediction from image ---
+def predict_from_image(image_path, age_model, gender_model):
+    # Load image
+    frame = cv2.imread(image_path)
+    if frame is None:
+        print("Error: Image not found or cannot be opened")
+        return None, None
+
+    face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_default.xml")
+    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    
+    # Detect faces
+    faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(60, 60))
+    
+    if len(faces) == 0:
+        print("No face detected in the image.")
+        return None, None
+
+    # For simplicity, pick the largest detected face (like live webcam)
+    x, y, w, h = max(faces, key=lambda b: b[2]*b[3])
+    face_img = frame[y:y+h, x:x+w]
+    face_pil = Image.fromarray(cv2.cvtColor(face_img, cv2.COLOR_BGR2RGB))
+    img_tensor = transform(face_pil).unsqueeze(0).to(DEVICE)
+
     with torch.no_grad():
-        age_pred = age_model(age_tensor).cpu().item()
-    age = int(round(age_pred))
+        # Gender prediction
+        gender_logits = gender_model(img_tensor)
+        gender_prob = torch.sigmoid(gender_logits).item()
+        gender_label = genders[int(gender_prob > 0.5)]
 
-    # === Gender Prediction ===
-    gender_img = Image.fromarray(cv2.cvtColor(face_image, cv2.COLOR_BGR2RGB))
-    input_tensor = common_transform(gender_img).unsqueeze(0).to(DEVICE)
+        # Age prediction
+        age_pred = age_model(img_tensor).item()
 
-    with torch.no_grad():
-        outputs = gender_model(input_tensor)
-        probs = torch.nn.functional.softmax(outputs, dim=1).cpu().numpy()[0]
-        gender_class = np.argmax(probs)
+    # Optionally, draw rectangle like live webcam for visualization
+    cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
+    cv2.putText(frame, f"{gender_label}, {int(age_pred)}", (x, y-10), 
+                cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2, cv2.LINE_AA)
+    
+    # Show the image (optional)
+    cv2.imshow("Predicted Face", frame)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
 
-    gender_label = GENDER_MAP[gender_class]
-    return int(round(age)), gender_label, probs
+    print(f"Predicted Gender: {gender_label} ({gender_prob:.2f})")
+    print(f"Predicted Age: {age_pred:.1f} years")
+    
+    return age_pred, gender_label
 
-# Initialize MediaPipe face detection
-mp_face_detection = mp.solutions.face_detection
-mp_drawing = mp.solutions.drawing_utils
+# --- Live webcam prediction ---
+def live_face_predict(age_model, gender_model):
+    face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_default.xml")
+    cap = cv2.VideoCapture(0)
 
-# Main loop
-with mp_face_detection.FaceDetection(model_selection=1, min_detection_confidence=0.5) as face_detection:
-    for filename in os.listdir(TEST_FOLDER):
-        if not filename.lower().endswith(('.png', '.jpg', '.jpeg')):
-            continue
+    if not cap.isOpened():
+        print("Error: Could not open webcam")
+        return
 
-        path = os.path.join(TEST_FOLDER, filename)
-        image = cv2.imread(path)
-        if image is None:
-            print(f"Could not read image: {filename}")
-            continue
+    while True:
+        ret, frame = cap.read()
+        if not ret:
+            break
 
-        # Convert to RGB for MediaPipe
-        image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        results = face_detection.process(image_rgb)
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        faces = face_cascade.detectMultiScale(gray, 1.1, 5, minSize=(60, 60))
 
-        if results.detections:
-            for detection in results.detections:
-                bboxC = detection.location_data.relative_bounding_box
-                ih, iw, _ = image.shape
-                x = int(bboxC.xmin * iw)
-                y = int(bboxC.ymin * ih)
-                w = int(bboxC.width * iw)
-                h = int(bboxC.height * ih)
+        for (x, y, w, h) in faces:
+            face = frame[y:y+h, x:x+w]
+            face_pil = Image.fromarray(cv2.cvtColor(face, cv2.COLOR_BGR2RGB))
+            img_tensor = transform(face_pil).unsqueeze(0).to(DEVICE)
 
-                # Optional padding around face
-                padding = int(0.1 * w)
-                x1 = max(0, x - padding)
-                y1 = max(0, y - padding)
-                x2 = min(iw, x + w + padding)
-                y2 = min(ih, y + h + padding)
+            with torch.no_grad():
+                gender_logits = gender_model(img_tensor)
+                gender_prob = torch.sigmoid(gender_logits).item()
+                gender_label = genders[int(gender_prob > 0.5)]
 
-                face = image[y1:y2, x1:x2]
+                age_pred = age_model(img_tensor).item()
 
-                # Only predict if face crop is valid
-                if face.size == 0:
-                    continue
+            text = f"{gender_label}, {int(age_pred)}"
+            cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
+            cv2.putText(frame, text, (x, y-10), cv2.FONT_HERSHEY_SIMPLEX,
+                        0.8, (0, 255, 0), 2, cv2.LINE_AA)
 
-                age, gender, probs = process_and_predict(face)
+        cv2.imshow("Live Age & Gender Prediction", frame)
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
 
-                label = f"Age: {age}, Gender: {gender}"
-                cv2.rectangle(image, (x1, y1), (x2, y2), (255, 0, 0), 2)
-                cv2.putText(image, label, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (36, 255, 12), 2)
+    cap.release()
+    cv2.destroyAllWindows()
 
-        else:
-            print(f"No face detected in {filename}")
+if __name__ == "__main__":
+    # Load models
+    print("Loading models...")
+    age_model = load_age_model()
+    gender_model = load_gender_model()
 
-        # Show result
-        cv2.imshow(f'Prediction - {filename}', image)
-        cv2.waitKey(0)
-        cv2.destroyAllWindows()
+    # # Directory containing test images
+    # test_dir = "test"
+    # image_files = [f for f in os.listdir(test_dir) 
+    #                if f.lower().endswith(('.png', '.jpg', '.jpeg'))]
+
+    # # Predict each image
+    # for img_file in image_files:
+    #     img_path = os.path.join(test_dir, img_file)
+    #     print(f"\nPredicting {img_file} ...")
+    #     age_pred, gender_label = predict_from_image(img_path, age_model, gender_model)
+
+    # Or run live webcam
+    live_face_predict(age_model, gender_model)

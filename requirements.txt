@@ -1,11 +1,8 @@
-numpy
-pandas
-matplotlib
 pillow
+numpy
 tqdm
+matplotlib
 scikit-learn
-opencv-python
-xgboost
 torch
 torchvision
-mediapipe
+opencv-python
