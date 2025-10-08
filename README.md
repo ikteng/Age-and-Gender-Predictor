@@ -3,7 +3,10 @@
 
 ![UTKface dataset](https://github.com/ikteng/Age-and-Gender-Predictor/blob/aea2f51ddd94cc3d3abf2e661136da0e00d76730/media/Screenshot%202024-05-21%20113638.png)
 
-Dataset: https://www.kaggle.com/datasets/jangedoo/utkface-new
+Dataset: 
+https://www.kaggle.com/datasets/jangedoo/utkface-
+https://susanqq.github.io/UTKFace/
+
 
 I used the crop_part1 of the dataset in this project.
 
@@ -19,3 +22,4 @@ I used the crop_part1 of the dataset in this project.
     This project uses the UTKFace dataset (https://www.kaggle.com/datasets/jangedoo/utkface-new). After downloading, extract and place the crop part1 folder in the root of the project directory
 4. Run the program
     You can run the build_model files to run and build models or run the prediction/prediction live files to test the models out yourself!
+

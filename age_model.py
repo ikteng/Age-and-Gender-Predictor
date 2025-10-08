@@ -9,7 +9,6 @@ from torch import nn, optim
 from torch.utils.data import Dataset, DataLoader
 from torchvision import models, transforms
 
-# resnet18: Training complete. Best model from epoch 11 with MAE: 4.28
 # resnet34: Training complete. Best model from epoch 14 with MAE: 4.05
 
 IMG_SIZE = 128
