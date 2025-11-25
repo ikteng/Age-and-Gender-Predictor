@@ -1,3 +1,4 @@
+import kagglehub
 import os
 from PIL import Image
 import numpy as np
@@ -5,6 +6,11 @@ from tqdm import tqdm
 import matplotlib.pyplot as plt
 
 IMG_SIZE = 128
+
+# --- Step 1: Download dataset with kagglehub ---
+root_path = kagglehub.dataset_download("jangedoo/utkface-new")
+print("Path to dataset files:", root_path)
+folder_path = os.path.join(root_path, "crop_part1")
 
 class FolderImageDataLoader:
     def __init__(self, folder_path, image_size=(IMG_SIZE, IMG_SIZE), save_path="processed_data.npz"):
@@ -31,7 +37,7 @@ class FolderImageDataLoader:
                 skipped_format += 1
                 continue
 
-            # --- Skip invalid gender labels (not 0 or 1) ---
+            # Skip invalid gender labels (not 0 or 1)
             if gender not in [0, 1]:
                 skipped_invalid += 1
                 continue
@@ -50,13 +56,13 @@ class FolderImageDataLoader:
         y_age = np.array(ages)
         y_gender = np.array(genders)
 
-        print(f"\n✅ Loaded {len(X)} valid images.")
-        print(f"🚫 Skipped {skipped_invalid} with invalid gender, {skipped_format} invalid filenames.")
+        print(f"\nLoaded {len(X)} valid images.")
+        print(f"Skipped {skipped_invalid} with invalid gender, {skipped_format} invalid filenames.")
         print(f"Class counts → Male: {(y_gender == 0).sum()}, Female: {(y_gender == 1).sum()}")
 
         # Save processed data
         np.savez_compressed(self.save_path, X=X, y_age=y_age, y_gender=y_gender)
-        print(f"\n💾 Saved cleaned dataset to {self.save_path}")
+        print(f"\nSaved cleaned dataset to {self.save_path}")
 
         return X, y_age, y_gender
 
@@ -83,11 +89,9 @@ def show_samples_by_gender(X, y_gender, samples_per_gender=5):
 
 
 if __name__ == "__main__":
-    folder_path = "crop_part1"
-    image_size = (IMG_SIZE, IMG_SIZE)
     npz_path = f"utkface_processed_{IMG_SIZE}.npz"
 
-    data_loader = FolderImageDataLoader(folder_path, image_size=image_size, save_path=npz_path)
+    data_loader = FolderImageDataLoader(folder_path, image_size=(IMG_SIZE, IMG_SIZE), save_path=npz_path)
     X_all, y_age_all, y_gender_all = data_loader.load_all()
 
     # Display 5 samples per gender

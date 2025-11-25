@@ -9,7 +9,8 @@ from torch import nn, optim
 from torch.utils.data import Dataset, DataLoader, WeightedRandomSampler
 from torchvision import models, transforms
 
-# EfficientnetB0: Training complete. Best model from epoch 6 with Acc: 89.72%
+# Training complete. Best model from epoch 10 with Acc: 89.11%
+# Model saved to: gender_efficientnetb0_128_30.pth 
 
 IMG_SIZE = 128
 BATCH_SIZE = 32

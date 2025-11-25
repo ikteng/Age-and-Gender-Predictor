@@ -11,6 +11,9 @@ from torchvision import models, transforms
 
 # resnet34: Training complete. Best model from epoch 14 with MAE: 4.05
 
+# Training complete. Best model from epoch 15 with MAE: 4.02
+# Model saved to: age_resnet34_128_30.pth
+
 IMG_SIZE = 128
 BATCH_SIZE = 32
 EPOCHS = 30
